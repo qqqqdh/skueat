@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+    overflow: hidden; /* 전체 페이지 스크롤 방지 */
+}
+
+/* 컨트롤러 공통 스타일 */
+#category-filter, #recommendation-box, #search-box {
+    padding: 10px 16px; border-bottom: 1px solid #ddd; background: #fff;
+}
+
+#category-filter { background: #343a40; text-align: center; }
+#category-filter button {
+    margin: 2px; padding: 6px 12px; border-radius: 4px;
+    border: none; background: #495057; color: #fff; cursor: pointer;
+}
+#category-filter button:hover { background: #6c757d; }
+
+#search-box input { width: 70%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+#search-box button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+/* 핵심 수정: 컨테이너와 리스트 영역 */
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: calc(100vh - 160px);
+    overflow: hidden;
+}
+
+#r-table {
+    width: 100%;
+    border-collapse: collapse;
+    /* height: 100% 설정을 절대 하지 않습니다 */
+}
+
+#r-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* 레이아웃 고정 */
+}
+
+#r-table th {
+    background: #f1f1f1;
+    padding: 10px;
+    position: sticky; top: 0;
+}
+
+#r-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+    /* 핵심: 내용이 적어도 위쪽으로 정렬되도록 함 */
+    vertical-align: top; 
+}
+
+/* 리스트 내부 텍스트 스타일 */
+#r-table ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.title { font-weight: bold; color: #007bff; text-decoration: none; font-size: 16px; display: block; margin-bottom: 5px; }
+.addr { font-size: 13px; color: #666; cursor: pointer; line-height: 1.4; }
+.addr:hover { text-decoration: underline; color: #000; }
+.food { font-size: 11px; color: #999; margin-top: 5px; display: block; }
+
+.map-area { flex: 1; height: 100%; }
+
+/* 지도 위 오버레이 */
+.map-overlay {
+    background: white; padding: 5px 10px; border: 1px solid #888;
+    border-radius: 5px; font-weight: bold; font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}

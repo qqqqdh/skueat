@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title> 모먹지?</title>
+
+    <link rel="stylesheet" href="style.css">
+    
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=6547e8de27235a7cd34591a667e5cae5&libraries=services"></script>
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; font-family: Arial; }
+        .container {
+            display: flex;
+            /*flex-direction: row;
+            align-items: flex-start;*/
+            width: 100vw;
+            height:100vh
+        }
+        .table-area {
+            flex: 1;
+            overflow: auto;
+            width: 30%;
+            min-width: 200px;
+            max-width: 400px;
+        }
+        .table-area table {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #map {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+     <div id="category-filter" style="padding: 10px; background: #f4f4f4; border-bottom: 1px solid #ddd;">
+    <button onclick="filterCategory('all')">전체</button>
+    <button onclick="filterCategory('국수')">국수</button>
+    <button onclick="filterCategory('중식')">중식</button>
+    <button onclick="filterCategory('분식')">분식</button>
+    <button onclick="filterCategory('닭요리')">닭요리</button>
+    <button onclick="filterCategory('갈비')">갈비</button>
+    <button onclick="filterCategory('샤브샤브')">샤브샤브</button>
+    <button onclick="filterCategory('술집')">술집</button>
+    <button onclick="filterCategory('고기')">고기</button>
+    
+    <!-- 필요한 카테고리 버튼 추가 가능 -->
+</div>
+<div id="recommendation-box" style="padding: 10px; background: #fffbe6; border-bottom: 1px solid #ddd;">
+    <strong>📍 오늘의 추천 음식점:</strong>
+    <a id="recommended-link" href="#" target="_blank" style="font-weight:bold; color:#007bff; text-decoration:none;">
+        (추천 없음)
+    </a>
+</div>
+<div id="search-box" style="padding:10px; background:#f9f9f9; border-bottom:1px solid #ddd;">
+    <input type="text" id="search-input" placeholder="음식점 이름 또는 주소를 입력하세요" style="width: 80%; padding: 6px 10px; font-size: 14px;">
+    <button onclick="searchRestaurant()" style="padding: 6px 10px;">검색</button>
+</div>
+
+
+
+    <div class="container">
+        <div class="table-area">
+            <table id = "r-table">
+             <tr>
+             <th>목록</th>
+             </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href = "https://place.map.kakao.com/13092162">부산가야밀면 안양본점</a>
+                    <li class="addr" x = "126.932263875909" y = "37.3848854642594">경기도 안양시 만안구 문예로36번길 15</li>
+                    <li class="food">국수</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/17978026">지호한방삼계탕 만안구청점</a>
+                    <li class="addr" x="126.932522205927" y = "37.3849110208067">경기 안양시 만안구 안양로 115</li>
+                    <li class="food" >닭요리, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/888574466">미소푸드</a>
+                    <li class="addr" x="126.932155188339" y = "37.385330147164">경기 안양시 만안구 안양로 119</li>
+                    <li class="food">한식뷔페</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1001883450">중찬미식</a>
+                    <li class="addr" x="126.929747804889" y = "37.3822933729029">경기 안양시 만안구 냉천로 4</li>
+                    <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/16462275">와우리순대국</a>
+                     <li class="addr" x="126.930395802091" y = "37.3824244045313">경기 안양시 만안구 성결대학로 34-1</li>
+                     <li class="food">순대</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/118520162">엄마돈국수</a>
+                     <li class="addr" x="126.929052462381" y = "37.3826812991012">경기 안양시 만안구 냉천로 11</li>
+                     <li class="food">국수</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/16273180">토박이감자탕</a>
+                     <li class="addr" x="126.931543619665" y = "37.3839742047466">경기 안양시 만안구 안양로111번길 29</li>
+                     <li class="food">감자탕, 탕</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/12557676">참맛남원추어탕</a>	
+                     <li class="addr" x="126.932179039671" y = "37.3850507534564">경기 안양시 만안구 문예로36번길 11</li>
+                     <li class="food">추어탕, 탕</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1229249213">오늘은수제돈까스</a>
+                     <li class="addr" x="126.931419468162" y = "37.3839136741253">경기 안양시 만안구 안양로111번길 33</li>
+                     <li class="food">돈까스, 우동</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2105635163">부엉이샤브샤브스키야키</a>
+                    <li class="addr" x="126.932263875909" y = "37.3848854642594">경기 안양시 만안구 문예로36번길 15</li>
+                    <li class="food">샤브샤브</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1864598783">돈컵치컵</a>
+                     <li class="addr" x="126.929342303114" y = "37.3816061005363">경기 안양시 만안구 성결대학로 47</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1179574561">소림마라 안양만안점</a>
+                     <li class="addr" x="126.930151143008" y = "37.3822779339963">경기 안양시 만안구 성결대학로 38</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2065526380">소선</a>
+                     <li class="addr" x="126.933877079736" y = "37.3851813723658">경기 안양시 만안구 안양로112번길 13</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/98003334">아리산</a>
+                    <li class="addr" x="126.933853870283" y = "37.3867938308462">경기 안양시 만안구 문예로 59</li>
+                    <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1282458217">오로지짬뽕</a>
+                     <li class="addr" x="126.931415197811" y = "37.3878582619662">경기 안양시 만안구 안양로148번길 10</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1606421450">홍콩반점0410 만안구청점</a>
+                     <li class="addr" x="126.930867500882" y = "37.3870304433871">경기 안양시 만안구 안양로 143</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1623984538">88반점</a>
+                     <li class="addr" x="126.936093388897" y = "37.3845448463304">경기 안양시 만안구 덕천로 37</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2050716752">백채짬뽕</a>
+                     <li class="addr" x="126.935739467362" y = "37.3852566433662">경기 안양시 만안구 덕천로 45</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1380419551">몽샹</a>
+                     <li class="addr" x="126.933874259452" y = "37.386335581797">경기 안양시 만안구 만안로 35</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2092991987">풍미양꼬치</a>
+                     <li class="addr" x="126.933874259452" y = "37.386335581797">경기 안양시 만안구 만안로 35</li>
+                     <li class="food">양꼬치</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href ="http://place.map.kakao.com/11025132">난향명학본점</a>
+                     <li class="addr" x="126.936814746833" y = "37.384080756249">경기 안양시 만안구 덕천로 34</li>
+                     <li class="food">중식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1726415782">소문난김밥처럼</a>
+                     <li class="addr" x="126.931872646792" y = "37.383108871331">경기 안양시 만안구 성결대학로 20</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/20493874">신전떡볶이 안양성결대점</a>
+                     <li class="addr" x="126.930292097675" y = "37.3823569468604">경기 안양시 만안구 성결대학로 36</li>
+                     <li class="food">떡볶이</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/7207904">소림김밥 안양만안점</a>
+                     <li class="addr" x="126.930151143008" y = "37.3822779339963">경기 안양시 만안구 성결대학로 38</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/832238107">남촌김밥 본점</a>
+                     <li class="addr" x="126.933807735556" y = "37.384811012897">경기 안양시 만안구 안양로 110</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1297051684">남촌김밥 별관</a>
+                     <li class="addr" x="126.934115411124" y = "37.3841903794355">경기 안양시 만안구 안양로 102</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1846388455">할머니가래떡볶이 안양점</a>
+                     <li class="addr" x="126.9343209889" y = "37.3839787532217">경기 안양시 만안구 안양로 96</li>
+                     <li class="food">떡볶이</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/932346628">일대김밥</a>
+                     <li class="addr" x="126.933622449079" y = "37.3855690302257">경기 안양시 만안구 문예로52번길 18</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/16946757">우리분식</a>
+                     <li class="addr" x="126.933373536382" y = "37.3849789901676">경기 안양시 만안구 안양로 112</li> 
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/803468091">미도김밥</a>
+                    <li class="addr" x="126.935739467362" y = "37.3852566433662">경기 안양시 만안구 덕천로 45</li>
+                    <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1752409790">제주분식</a>
+                     <li class="addr" x="126.930724472908" y = "37.3871082981948">경기 안양시 만안구 안양로 143-1</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/21434900">명학분식</a>
+                     <li class="addr" x="126.935698071574" y = "37.3856009019385">경기 안양시 만안구 덕천로 49</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1063347983">맘스</a>
+                     <li class="addr" x="126.934877389049" y = "37.3844231754901">경기 안양시 만안구 만안로 11</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1464071841">써니분식</a>
+                     <li class="addr" x="126.931546218314" y = "37.3893132196912">경기 안양시 만안구 수리산로 51</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1591689232">김밥앤분식</a>
+                     <li class="addr" x="126.930950360131" y = "37.3907501847715">경기 안양시 만안구 수리산로55번길 35</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/328696613">김밥말다</a>
+                     <li class="addr" x="126.93022700132" y = "37.3905846027261">경기 안양시 만안구 수리산로47번길 38</li>
+                     <li class="food">분식</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2126044626">호치킨 안양성결대점</a>
+                     <li class="addr" x="126.931089001347" y = "37.3827644063939">경기 안양시 만안구 성결대학로 28</li>
+                     <li class="food">치킨</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1521907226">45정닭도리탕 본점</a>
+                     <li class="addr" x="126.931264031048" y = "37.3838623156351">경기 안양시 만안구 안양로111번길 35</li>
+                     <li class="food">닭요리</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/224678890">청국닭</a>
+                    <li class="addr" x="126.929123499945" y = "37.3830250822937">경기 안양시 만안구 냉천로 14</li>
+                    <li class="food">닭요리</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/616190514">반주</a>
+                     <li class="addr" x="126.931151294564" y = "37.3837906186715">경기 안양시 만안구 안양로111번길 37</li>
+                     <li class="food">술집</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/24612700">작은울타리</a>
+                     <li class="addr" x="126.932179039671" y = "37.3850507534564">경기 안양시 만안구 문예로36번길 11</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/15498052">별밤지기</a>
+                     <li class="addr" x="126.929052462381" y = "37.3826812991012">경기 안양시 만안구 냉천로 11</li>
+                     <li class="food">술집</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1392808843">세븐마일 비어앤굿즈</a>
+                     <li class="addr" x="126.934877389049" y = "37.3844231754901">경기 안양시 만안구 만안로 11</li>
+                     <li class="food">술집</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/556107500">바지</a>
+                     <li class="addr" x="126.9343209889" y = "37.3839787532217">경기 안양시 만안구 안양로 96</li>
+                     <li class="food">칵테일바</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1383867494">이모네</a>
+                     <li class="addr" x="126.93458324149" y = "37.3853352094007">경기 안양시 만안구 만안로 21</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/18251761">논산훈련소포차</a>
+                     <li class="addr" x="126.933505809097" y = "37.3856925851157">경기 안양시 만안구 문예로52번길 14</li>
+                     <li class="food">실내포장마차, 호프</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/18824487">동막골</a>
+                     <li class="addr" x="126.933877079736" y = "37.3851813723658">경기 안양시 만안구 안양로112번길 13</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/16169962">비어캐빈 명학점</a>
+                     <li class="addr" x="126.934059264774" y = "37.3855110684841">경기 안양시 만안구 문예로52번길 19</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/9577472">6동포장마차</a>
+                     <li class="addr" x="126.930241342112" y = "37.3877822498109">경기 안양시 만안구 안양로 151-1</li>
+                     <li class="food">실내포장마차, 호프</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/202656010">명학맥주커피</a>
+                     <li class="addr" x="126.933877079736" y = "37.3851813723658">경기 안양시 만안구 안양로112번길 13</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/979421874">맥주톡</a>
+                     <li class="addr" x="126.934642908972" y = "37.3851507127771">경기 안양시 만안구 만안로 19</li>
+                     <li class="food">술집, 호프</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1516437783">밤이술이</a>
+                     <li class="addr" x="126.934877389049" y = "37.3844231754901">경기 안양시 만안구 만안로 11</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/175222422">7MILE</a>
+                     <li class="addr" x="126.934877389049" y = "37.3844231754901">경기 안양시 만안구 만안로 11</li>
+                     <li class="food">호프, 요리주점</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1633437082">복돼지숯불갈비</a>
+                     <li class="addr" x="126.929347655111" y = "37.3827614867437">경기 안양시 만안구 냉천로 12</li>
+                     <li class="food">갈비, 육류</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/9683431">고기마을</a>
+                     <li class="addr" x="126.932379841442" y = "37.3847593873264">경기 안양시 만안구 안양로111번길 10</li>
+                     <li class="food">육류, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/281588556">갈빗 안양점</a>
+                     <li class="addr" x="126.931201820704" y = "37.3834852010292">경기 안양시 만안구 문예로18번길 31</li>
+                     <li class="food">육류, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1372621907">연신내 생제육볶음전문점</a>
+                     <li class="addr" x="126.929587763284" y = "37.3824616790948">경기 안양시 만안구 냉천로 6-1</li>
+                     <li class="food">육류, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/384164778">베스트생갈비찜 찜닭</a>
+                     <li class="addr" x="126.929272940761" y = "37.3828452373025">경기 안양시 만안구 냉천로 12-1</li>
+                     <li class="food">갈비, 육류</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="http://place.map.kakao.com/1175395613">더두툼삼겹식당</a>
+                     <li class="addr" x="126.929587763284" y = "37.3824616790948">경기 안양시 만안구 냉천로 6-1</li>
+                     <li class="food">삼겹살, 육류</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/733705500">마구아 만안구청점</a>
+                     <li class="addr" x="126.931582288348" y = "37.3857814100562">경기 안양시 만안구 문예로 35</li>
+                     <li class="food">육류, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/60886083">불꽃 안양본점</a>	
+                     <li class="addr" x="126.933795288338" y = "37.3857400512593">경기 안양시 만안구 문예로52번길 15</li>
+                     <li class="food">육류, 고기</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/8127984">투다리 만안구청점</a>
+                     <li class="addr" x="126.930617549772" y = "37.3873404291854">경기 안양시 만안구 안양로 145-1</li>
+                     <li class="food">오뎅바</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/18521540">푸짐한마을</a>
+                     <li class="addr" x="126.93172600054" y = "37.3840734227839">경기 안양시 만안구 안양로111번길 25</li>
+                     <li class="food">찌개, 전골</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1157830979">배스킨라빈스 안양만안구청점</a>
+                     <li class="addr" x="126.932155188339" y = "37.385330147164">경기 안양시 만안구 안양로 119</li>
+                     <li class="food">아이스크림</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/24768588">맘스터치 성결대점</a>
+                     <li class="addr" x="126.930151143008" y = "37.3822779339963">경기 안양시 만안구 성결대학로 38</li>
+                     <li class="food">패스트푸드</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/16918055">떡궁</a>
+                     <li class="addr" x="126.931519503345" y = "37.3830528038902">경기 안양시 만안구 성결대학로 22</li>
+                     <li class="food">떡, 한과</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/169986040">장터보쌈</a>
+                     <li class="addr" x="126.931006837114" y = "37.3837103433724">경기 안양시 만안구 문예로18번길 25</li>
+                     <li class="food">족발, 보쌈</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/926912566">맵당 안양점</a>
+                     <li class="addr" x="126.929919541365" y = "37.3821758911713">경기 안양시 만안구 냉천로 2</li>
+                     <li class="food">갈비, 육류</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/19305451">부산회집</a>
+                     <li class="addr" x="126.931893907867" y = "37.3841956984097">경기 안양시 만안구 안양로111번길 21</li>
+                     <li class="food">회, 생선</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/2061821812">또와유명태간장조림 안양점</a>
+                     <li class="addr" x="126.931419468162" y = "37.3839136741253">경기 안양시 만안구 안양로111번길 33</li>
+                     <li class="food">해물, 생선</li>
+                </ul>
+                </td>
+                </tr>
+                <tr>
+                <td>
+                <ul><a class="title" href="https://place.map.kakao.com/1509168042">육꼬</a>
+                     <li class="addr" x="126.931419468162" y = "37.3839136741253">경기 안양시 만안구 만안로 11</li>
+                     <li class="food">술집, 고기</li>
+                </ul>
+                </td>
+                </tr>
+
+
+            </table>
+        </div>
+    <div class="map-area" id="map">
+
+    <script>
+        var mapContainer = document.getElementById('map'); 
+        var mapOption = {
+            center: new kakao.maps.LatLng(37.383260523291781, 126.936009490373863), 
+            level: 3 
+        };
+        var map = new kakao.maps.Map(mapContainer, mapOption);
+
+        var coordinates = [
+            [
+                [126.936009490373863, 37.383260523291781],
+                [126.936242783045628, 37.382663215953322],
+                [126.936444551757162, 37.382211237678995],
+                [126.936508446471819, 37.382068449165871],
+                [126.93664668960335, 37.381803202718736],
+                [126.936743307447699, 37.381642199959607],
+                [126.936765359988158, 37.381605465868468],
+                [126.936910455721872, 37.381366166204081],
+                [126.937138782862334, 37.381042758772992],
+                [126.937483681250583, 37.380612867326988],
+                [126.937944693353018, 37.380137331346972],
+                [126.938376924786056, 37.379733766721337],
+                [126.938679524449057, 37.379465548454483],
+                [126.9388637232816, 37.379302291471973],
+                [126.939684626074595, 37.378558043490884],
+                [126.940026624077547, 37.378230661895266],
+                [126.940195243287647, 37.378053438842855],
+                [126.940214984088271, 37.378032548300972],
+                [126.940296998244094, 37.377945755592492],
+                [126.940511983040679, 37.377704528605655],
+                [126.940739262407078, 37.377422797524005],
+                [126.940785300598407, 37.377360405786803],
+                [126.940877605116356, 37.377235289826068],
+                [126.940956049137355, 37.377128622494126],
+                [126.941185375113065, 37.376762397268422],
+                [126.940555317415615, 37.376242254182237],
+                [126.940511108141607, 37.376205990078446],
+                [126.940318167427407, 37.376048476914761],
+                [126.940076115393083, 37.375851238119886],
+                [126.939165660792526, 37.376011455542816],
+                [126.937373770821438, 37.376555540909777],
+                [126.934893825929208, 37.376996152574037],
+                [126.932765424432162, 37.377470334412997],
+                [126.930979992717909, 37.377528666348361],
+                [126.926947256171701, 37.377638452139792],
+                [126.924137308879381, 37.377312702496397],
+                [126.923923136376601, 37.377256450315649],
+                [126.921417807264717, 37.376518614550989],
+                [126.919899024074681, 37.376564130194993],
+                [126.919178246143204, 37.376933536574491],
+                [126.919210244062171, 37.377178190289143],
+                [126.919285070042349, 37.37754474146579],
+                [126.919353657435778, 37.377714085687231],
+                [126.919431208463052, 37.377818124322502],
+                [126.920582212572427, 37.379335822336692],
+                [126.921934103206212, 37.380899559682781],
+                [126.924169152605515, 37.383026435953866],
+                [126.925436486565545, 37.384031995984927],
+                [126.925688662575183, 37.384199974832498],
+                [126.925741270270706, 37.384224811635477],
+                [126.925789961193942, 37.384247789695706],
+                [126.932236649328289, 37.385795457087283],
+                [126.93376981552683, 37.383967405361844],
+                [126.933824711538733, 37.383895558380132],
+                [126.936009490373863, 37.383260523291781]
+            ]
+        ];
+
+        
+        var polygonPath = coordinates[0].map(function(coord) {
+            return new kakao.maps.LatLng(coord[1], coord[0]);
+        });
+
+        var polygon = new kakao.maps.Polygon({
+            path: polygonPath,
+            strokeWeight: 3,
+            strokeColor: '#FF0000',  // 선 색상
+            strokeOpacity: 0.8,      // 선 투명도
+            fillColor: '#FF0000',    // 면 색상
+            fillOpacity: 0.002         // 면 투명도
+        });
+
+        // 지도에 폴리곤을 표시
+        polygon.setMap(map);
+        ///////////////////////////////////////////////
+        var currentMarker = null;
+        var currentOverlay = null;
+        document.querySelectorAll('#r-table li.addr').forEach(function(li) {
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', function(event) {
+            // 기존 마커/오버레이 제거
+                if (currentMarker) currentMarker.setMap(null);
+                if (currentOverlay) currentOverlay.setMap(null);
+            // x, y 속성에서 좌표 추출
+                var x = parseFloat(this.getAttribute('x'));
+                var y = parseFloat(this.getAttribute('y'));
+
+            // 주소, 음식 정보 추출
+            var addr = this.textContent.trim();
+            var food = this.parentElement.querySelector('.food').textContent.trim();
+            var title = this.parentElement.querySelector('.title').textContent.trim();
+
+            // 마커 생성
+            var markerPosition = new kakao.maps.LatLng(y, x);
+            currentMarker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+                // 커스텀 이미지 사용시 image 옵션 추가
+            });
+
+            // 커스텀 오버레이 생성
+            var overlayContent = `
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.95); border-radius:8px; border:1px solid #888; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.1) margin-bottom:10px;">
+            <span style="color:#888">${title}</span>
+            </div>
+            `;
+            currentOverlay = new kakao.maps.CustomOverlay({
+                position: markerPosition,
+                content: overlayContent,
+                yAnchor: 1.4 // 마커 위에 표시
+            });
+            currentOverlay.setMap(map);
+
+            // 지도 중심 이동
+            map.panTo(markerPosition);
+
+            event.stopPropagation();
+        });
+    });
+        ///////////////////////////////////////////////
+    </script>
+        </div>
+    </div>
+    <script>
+function filterCategory(category) {
+    const rows = document.querySelectorAll('#r-table tr');
+    rows.forEach((row, index) => {
+        if (index === 0) return; // 첫 줄은 헤더니까 무조건 표시
+        const foodCell = row.querySelector('.food');
+        if (!foodCell) {
+            row.style.display = 'none';
+            return;
+        }
+        const food = foodCell.textContent.trim();
+        if (category === 'all' || food.includes(category)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+}
+</script>
+<script>
+function recommendRandomRestaurant() {
+    const rows = document.querySelectorAll('#r-table tr');
+    const candidates = [];
+
+    rows.forEach((row, index) => {
+        if (index === 0) return; // 헤더 제외
+        const titleLink = row.querySelector('.title');
+        if (titleLink) {
+            const title = titleLink.textContent.trim();
+            candidates.push(title);
+        }
+    });
+
+    if (candidates.length > 0) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        document.getElementById('recommended-title').textContent = pick;
+    } else {
+        document.getElementById('recommended-title').textContent = '(음식점 없음)';
+    }
+}
+
+// 페이지 로딩 시 자동 추천 실행
+window.addEventListener('DOMContentLoaded', recommendRandomRestaurant);
+
+function recommendRandomRestaurant() {
+    const rows = document.querySelectorAll('#r-table tr');
+    const candidates = [];
+
+    rows.forEach((row, index) => {
+        if (index === 0) return; // 헤더 제외
+        const titleLink = row.querySelector('.title');
+        if (titleLink) {
+            const title = titleLink.textContent.trim();
+            const href = titleLink.getAttribute('href');
+            candidates.push({ title, href });
+        }
+    });
+
+    const recommended = document.getElementById('recommended-link');
+
+    if (candidates.length > 0) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        recommended.textContent = pick.title;
+        recommended.href = pick.href;
+    } else {
+        recommended.textContent = '(음식점 없음)';
+        recommended.href = '#';
+    }
+
+    
+}
+function searchRestaurant() {
+    const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#r-table tr');
+
+    rows.forEach((row, index) => {
+        if (index === 0) return; // 헤더 유지
+        const title = row.querySelector('.title')?.textContent.toLowerCase() || "";
+        const addr = row.querySelector('.addr')?.textContent.toLowerCase() || "";
+
+        if (title.includes(keyword) || addr.includes(keyword)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+document.getElementById('search-input').addEventListener('keyup', function(event) {
+    if (event.key === 'Enter') {
+        searchRestaurant();
+    }
+});
+
+let recommendedMarker = null; // 추천 마커 저장
+
+function recommendRandomRestaurant() {
+    const rows = document.querySelectorAll('#r-table tr');
+    const candidates = [];
+
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+        const titleEl = row.querySelector('.title');
+        const addrEl = row.querySelector('.addr');
+
+        if (titleEl && addrEl) {
+            const title = titleEl.textContent.trim();
+            const href = titleEl.getAttribute('href');
+            const x = parseFloat(addrEl.getAttribute('x'));
+            const y = parseFloat(addrEl.getAttribute('y'));
+
+            candidates.push({ title, href, x, y });
+        }
+    });
+
+    const recommended = document.getElementById('recommended-link');
+
+    if (candidates.length > 0) {
+        const pick = candidates[Math.floor(Math.random() * candidates.length)];
+        recommended.textContent = pick.title;
+        recommended.href = pick.href;
+
+        // 기존 추천 마커 제거
+        if (recommendedMarker) {
+            recommendedMarker.setMap(null);
+        }
+
+        // 마커 생성
+        const markerPosition = new kakao.maps.LatLng(pick.y, pick.x);
+        recommendedMarker = new kakao.maps.Marker({
+            position: markerPosition,
+            map: map
+        });
+
+        // 지도 중심 이동
+        map.panTo(markerPosition);
+    } else {
+        recommended.textContent = '(음식점 없음)';
+        recommended.href = '#';
+    }
+}
+
+
+
+</script>
+
+</body>
+</html>
