@@ -99,8 +99,8 @@ func seedData() {
 		{Title: "메가MGC커피 안양성결대점", Addr: "경기 안양시 만안구 성결대학로 34", Food: "카페", X: 126.930431, Y: 37.382421, URL: "https://place.map.kakao.com/1393693253"},
 		{Title: "컴포즈커피 안양성결대점", Addr: "경기 안양시 만안구 성결대학로 28", Food: "카페", X: 126.931089, Y: 37.382764, URL: "https://place.map.kakao.com/1381368940"},
 		{Title: "에이바우트커피 성결대점", Addr: "경기 안양시 만안구 성결대학로 38", Food: "카페", X: 126.930151, Y: 37.382278, URL: "https://place.map.kakao.com/1330962388"},
-		{Title: "카페 인", Addr: "경기 안양시 만안구 성결대학로 43", Food: "카페", X: 126.929550, Y: 37.381850, URL: "https://place.map.kakao.com/27230491"},
-		{Title: "하이포커스", Addr: "경기 안양시 만안구 성결대학로 31", Food: "카페", X: 126.930720, Y: 37.382410, URL: "https://place.map.kakao.com/1752402241"},
+		{Title: "더카페", Addr: "경기 안양시 만안구 성결대학로 48-1 1층", Food: "카페", X: 126.92905100691, Y: 37.3818291998909, URL: "https://place.map.kakao.com/624783644"},
+		{Title: "하이포커스", Addr: "경기 안양시 만안구 성결대학로 31", Food: "카페", X: 126.928976, Y: 37.381696, URL: "https://place.map.kakao.com/624783644"},
 	}
 	DB.Create(&samples)
 }
