@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모먹지? - 성결대 맛집 가이드</title>
+    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{.ApiKey}}&libraries=services"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        :root { --primary: #007bff; --accent: #ffc107; --bg: #f8f9fa; --border: #dee2e6; }
+        * { box-sizing: border-box; }
+        
+        html, body { 
+            margin: 0; padding: 0; height: 100%; 
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            overflow: hidden; 
+        }
+
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+
+        /* 컨트롤러 영역 */
+        .header { background: #fff; border-bottom: 1px solid var(--border); z-index: 10; padding: 0; }
+        
+        #category-filter { background: #343a40; padding: 10px; text-align: center; }
+        #category-filter button {
+            margin: 2px; padding: 6px 12px; border-radius: 4px;
+            border: none; background: #495057; color: #fff; cursor: pointer;
+            font-size: 13px; transition: 0.2s;
+        }
+        #category-filter button:hover, #category-filter button.active { background: var(--primary); }
+
+        #search-box { padding: 10px 16px; border-bottom: 1px solid #ddd; background: #fff; display: flex; gap: 8px; align-items: center; }
+        #search-box input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-pick { padding: 8px 15px; background: var(--accent); color: #333; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        .recommend-display { background: #fffbe6; padding: 8px 16px; border-bottom: 1px solid #ffe58f; font-size: 14px; }
+        #recommended-link { color: var(--primary); font-weight: bold; text-decoration: none; }
+
+        /* 메인 컨텐츠 영역 */
+        .main { 
+            display: flex; 
+            flex: 1; 
+            height: calc(100vh - 160px); /* 헤더 높이 제외 */
+            overflow: hidden; 
+        }
+
+        .sidebar { 
+            width: 350px; 
+            border-right: 1px solid var(--border); 
+            overflow-y: auto; 
+            background: #fff; 
+        }
+
+        #r-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        #r-table th { background: #f1f1f1; padding: 10px; position: sticky; top: 0; z-index: 5; font-size: 14px; border-bottom: 2px solid var(--border); }
+        #r-table td { padding: 15px; border-bottom: 1px solid #f1f1f1; vertical-align: top; cursor: pointer; transition: background 0.2s; }
+        #r-table tr:hover td { background: #f8f9fa; }
+
+        .title { font-weight: bold; color: var(--primary); text-decoration: none; font-size: 16px; display: block; margin-bottom: 5px; }
+        .addr { font-size: 13px; color: #666; line-height: 1.4; display: block; }
+        .food { font-size: 11px; color: #999; margin-top: 5px; display: inline-block; padding: 2px 6px; background: #eee; border-radius: 4px; }
+
+        .map-area { flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+
+        @media (max-width: 768px) {
+            .main { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 40%; }
+            .map-area { height: 60%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div id="category-filter">
+            <button class="active" onclick="applyFilter('all', this)">전체</button>
+            <button onclick="applyFilter('국수', this)">국수</button>
+            <button onclick="applyFilter('중식', this)">중식</button>
+            <button onclick="applyFilter('분식', this)">분식</button>
+            <button onclick="applyFilter('고기', this)">고기</button>
+            <button onclick="applyFilter('치킨', this)">치킨</button>
+            <button onclick="applyFilter('술집', this)">술집</button>
+            <button onclick="applyFilter('카페', this)">카페</button>
+        </div>
+        <div id="search-box">
+            <input type="text" id="search-input" placeholder="성결대 주변 맛집/카페 검색..." onkeyup="if(event.key==='Enter') applySearch()">
+            <button class="btn-pick" onclick="pickRandom()">🎲 무작위 추천</button>
+        </div>
+    </div>
+
+    <div class="recommend-display">
+        📍 <strong>오늘의 추천:</strong> 
+        <a id="recommended-link" href="#" target="_blank">리스트에서 선택하거나 주사위를 눌러보세요!</a>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <table id="r-table">
+                <thead>
+                    <tr><th>맛집 리스트</th></tr>
+                </thead>
+                <tbody id="res-list">
+                    </tbody>
+            </table>
+        </div>
+        <div class="map-area">
+            <div id="map"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /** 1. 지도 초기화 및 안양 8동 폴리곤 **/
+    let map, currentMarker = null, currentOverlay = null;
+    const boundaryCoords = [
+        [126.936009, 37.383260], [126.936242, 37.382663], 
+        [126.936444, 37.382211], [126.936508, 37.382068], 
+        [126.936646, 37.381803], [126.936743, 37.381642], 
+        [126.936765, 37.381605], [126.936910, 37.381366], 
+        [126.937138, 37.381042], [126.937483, 37.380612], 
+        [126.937944, 37.380137], [126.938376, 37.379733], 
+        [126.938679, 37.379465], [126.938863, 37.379302], 
+        [126.939684, 37.378558], [126.940026, 37.378230], 
+        [126.940195, 37.378053], [126.940214, 37.378032], 
+        [126.940296, 37.377945], [126.940511, 37.377704], 
+        [126.940739, 37.377422], [126.940785, 37.377360], 
+        [126.940877, 37.377235], [126.940956, 37.377128], 
+        [126.941185, 37.376762], [126.940555, 37.376242], 
+        [126.940511, 37.376205], [126.940318, 37.376048], 
+        [126.940076, 37.375851], [126.939165, 37.376011], 
+        [126.937373, 37.376555], [126.934893, 37.376996], 
+        [126.932765, 37.377470], [126.930979, 37.377528], 
+        [126.926947, 37.377638], [126.924137, 37.377312], 
+        [126.923923, 37.377256], [126.921417, 37.376518], 
+        [126.919899, 37.376564], [126.919178, 37.376933], 
+        [126.919210, 37.377178], [126.919285, 37.377544], 
+        [126.919353, 37.377714], [126.919431, 37.377818], 
+        [126.920582, 37.379335], [126.921934, 37.380899], 
+        [126.924169, 37.383026], [126.925436, 37.384031], 
+        [126.925688, 37.384199], [126.925741, 37.384224], 
+        [126.925790, 37.384248], [126.932237, 37.385795], 
+        [126.933770, 37.383967], [126.933825, 37.383896], 
+        [126.936009, 37.383261]
+    ];
+
+    function initMap() {
+        const mapContainer = document.getElementById('map');
+        const mapOption = { center: new kakao.maps.LatLng(37.383, 126.932), level: 3 };
+        map = new kakao.maps.Map(mapContainer, mapOption);
+
+        const polygonPath = boundaryCoords.map(c => new kakao.maps.LatLng(c[1], c[0]));
+        new kakao.maps.Polygon({
+            path: polygonPath, strokeWeight: 3, strokeColor: '#FF0000', strokeOpacity: 0.8,
+            fillColor: '#FF0000', fillOpacity: 0.05
+        }).setMap(map);
+    }
+    function filterByCategory(category) {
+    // API 호출 시 카테고리 파라미터 추가
+    fetch(`/api/restaurants?category=${category}`)
+        .then(res => res.json())
+        .then(data => {
+            renderList(data);  // 목록 업데이트
+            displayMarkers(data); // 지도 마커 업데이트
+        });
+}
+
+    /** 2. 백엔드 API 연동 로직 **/
+    async function fetchData(category = 'all', search = '') {
+        const url = `http://localhost:8080/api/restaurants?category=${category}&search=${search}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderList(data);
+        } catch (error) {
+            console.error("데이터 로드 실패:", error);
+        }
+    }
+
+    function renderList(data) {
+        const listBody = document.getElementById('res-list');
+        listBody.innerHTML = '';
+        
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <a class="title" href="${item.url}" target="_blank">${item.title}</a>
+                    <span class="addr">${item.addr}</span>
+                    <span class="food">${item.food}</span>
+                </td>
+            `;
+            tr.onclick = () => focusOn(item);
+            listBody.appendChild(tr);
+        });
+    }
+
+    /** 3. 단일 마커 시스템 **/
+    function focusOn(item) {
+        if (currentMarker) currentMarker.setMap(null);
+        if (currentOverlay) currentOverlay.setMap(null);
+
+        const pos = new kakao.maps.LatLng(item.y, item.x);
+        currentMarker = new kakao.maps.Marker({ position: pos, map: map });
+        
+        currentOverlay = new kakao.maps.CustomOverlay({
+            position: pos,
+            content: `<div class="map-overlay" style="padding:5px 10px; background:white; border:1px solid #888; border-radius:5px; font-size:12px; bottom:40px; position:relative; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); font-weight:bold;">${item.title}</div>`,
+            yAnchor: 1
+        });
+        currentOverlay.setMap(map);
+        map.panTo(pos);
+    }
+
+    /** 4. 필터 및 무작위 추천 **/
+    function applyFilter(category, btn) {
+        document.querySelectorAll('#category-filter button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        fetchData(category, document.getElementById('search-input').value);
+    }
+
+    function applySearch() {
+        const keyword = document.getElementById('search-input').value;
+        fetchData('all', keyword);
+    }
+
+    async function pickRandom() {
+        try {
+            const response = await fetch('http://localhost:8080/api/restaurants/random');
+            const pick = await response.json();
+            
+            const link = document.getElementById('recommended-link');
+            link.textContent = `${pick.title} (${pick.food})`;
+            link.href = pick.url;
+            focusOn(pick);
+        } catch (error) {
+            console.error("추천 데이터를 가져오지 못했습니다.");
+        }
+    }
+
+    // 초기화 실행
+    initMap();
+    fetchData();
+</script>
+
+</body>
+</html>
