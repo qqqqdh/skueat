@@ -3,21 +3,30 @@ package main
 import (
 	"log"
 
-	"github.com/glebarez/sqlite" // GCC가 필요 없는 Pure Go 드라이버
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-// Restaurant 구조체: JSON 태그를 소문자로 설정해야 프론트엔드와 연동됩니다.
 type Restaurant struct {
 	gorm.Model
-	Title string  `json:"title"`
-	Addr  string  `json:"addr"`
-	Food  string  `json:"food"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	URL   string  `json:"url"`
+	Title       string  `json:"title"`
+	Addr        string  `json:"addr"`
+	Food        string  `json:"food"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	URL         string  `json:"url"`
+	AvgRating   float64 `json:"avg_rating" gorm:"default:0"`   // 평균 별점
+	RatingCount int     `json:"rating_count" gorm:"default:0"` // 참여 인원
+}
+
+// 별점 기록 테이블
+type Rating struct {
+	gorm.Model
+	RestaurantID uint   `json:"restaurant_id"`
+	UserID       string `json:"user_id"` // 카카오 고유 ID
+	Score        int    `json:"score"`
 }
 
 func InitDB() {
@@ -26,16 +35,15 @@ func InitDB() {
 	if err != nil {
 		log.Fatal("DB 연결 실패:", err)
 	}
-	DB.AutoMigrate(&Restaurant{})
+	// 두 테이블 모두 마이그레이션
+	DB.AutoMigrate(&Restaurant{}, &Rating{})
 
-	// 데이터가 없으면 초기 데이터 주입
 	var count int64
 	DB.Model(&Restaurant{}).Count(&count)
 	if count == 0 {
 		seedData()
 	}
 }
-
 func seedData() {
 	samples := []Restaurant{
 		{Title: "부산가야밀면 안양본점", Addr: "경기도 안양시 만안구 문예로36번길 15", Food: "국수", X: 126.932263875909, Y: 37.3848854642594, URL: "https://place.map.kakao.com/13092162"},
@@ -101,6 +109,10 @@ func seedData() {
 		{Title: "에이바우트커피 성결대점", Addr: "경기 안양시 만안구 성결대학로 38", Food: "카페", X: 126.930151, Y: 37.382278, URL: "https://place.map.kakao.com/1330962388"},
 		{Title: "더카페", Addr: "경기 안양시 만안구 성결대학로 48-1 1층", Food: "카페", X: 126.92905100691, Y: 37.3818291998909, URL: "https://place.map.kakao.com/624783644"},
 		{Title: "하이포커스", Addr: "경기 안양시 만안구 성결대학로 31", Food: "카페", X: 126.928976, Y: 37.381696, URL: "https://place.map.kakao.com/624783644"},
+		{Title: "동대문 엽기떡볶이", Addr: "경기 안양시 만안구 성결대학로 28 1층", Food: "분식", X: 126.931089001347, Y: 37.3827644063939, URL: "https://place.map.kakao.com/16170476"},
+		{Title: "신전떡볶이", Addr: "경기 안양시 만안구 성결대학로 36 1층", Food: "분식", X: 126.930292097675, Y: 37.3823569468604, URL: "https://place.map.kakao.com/16170476"},
+		{Title: "힐링돈가스", Addr: "경기 안양시 만안구 성결대학로 47 1층", Food: "고기", X: 126.929342303114, Y: 37.3816061005363, URL: "https://place.map.kakao.com/279095344"},
+		{Title: "가마치통닭", Addr: "경기 안양시 만안구 성결대학로 30 1층 101호", Food: "치킨", X: 126.930879977321, Y: 37.3826648113753, URL: "https://place.map.kakao.com/1051546409"},
 	}
 	DB.Create(&samples)
 }

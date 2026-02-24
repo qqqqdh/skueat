@@ -2,248 +2,319 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모먹지? - 성결대 맛집 가이드</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>skueat - 성결대 맛집 가이드</title>
+    
     <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{.ApiKey}}&libraries=services"></script>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.1.0/kakao.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
 
-        :root { --primary: #007bff; --accent: #ffc107; --bg: #f8f9fa; --border: #dee2e6; }
-        * { box-sizing: border-box; }
-        
-        html, body { 
-            margin: 0; padding: 0; height: 100%; 
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8f9fa;
+        :root {
+            --primary: #0056a8; /* 성결대 블루 */
+            --accent: #ff9f43;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --text-sub: #707070;
+            --border: #eceef0;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; padding: 0; height: 100vh; 
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
             overflow: hidden; 
         }
 
         .app-container { display: flex; flex-direction: column; height: 100vh; }
 
-        /* 컨트롤러 영역 */
-        .header { background: #fff; border-bottom: 1px solid var(--border); z-index: 10; padding: 0; }
-        
-        #category-filter { background: #343a40; padding: 10px; text-align: center; }
-        #category-filter button {
-            margin: 2px; padding: 6px 12px; border-radius: 4px;
-            border: none; background: #495057; color: #fff; cursor: pointer;
-            font-size: 13px; transition: 0.2s;
-        }
-        #category-filter button:hover, #category-filter button.active { background: var(--primary); }
-
-        #search-box { padding: 10px 16px; border-bottom: 1px solid #ddd; background: #fff; display: flex; gap: 8px; align-items: center; }
-        #search-box input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-pick { padding: 8px 15px; background: var(--accent); color: #333; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-
-        .recommend-display { background: #fffbe6; padding: 8px 16px; border-bottom: 1px solid #ffe58f; font-size: 14px; }
-        #recommended-link { color: var(--primary); font-weight: bold; text-decoration: none; }
-
-        /* 메인 컨텐츠 영역 */
-        .main { 
-            display: flex; 
-            flex: 1; 
-            height: calc(100vh - 160px); /* 헤더 높이 제외 */
-            overflow: hidden; 
-        }
-
-        .sidebar { 
-            width: 350px; 
-            border-right: 1px solid var(--border); 
-            overflow-y: auto; 
+        /* 헤더 영역 */
+        .header { 
             background: #fff; 
+            padding: 12px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
         }
 
-        #r-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        #r-table th { background: #f1f1f1; padding: 10px; position: sticky; top: 0; z-index: 5; font-size: 14px; border-bottom: 2px solid var(--border); }
-        #r-table td { padding: 15px; border-bottom: 1px solid #f1f1f1; vertical-align: top; cursor: pointer; transition: background 0.2s; }
-        #r-table tr:hover td { background: #f8f9fa; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .logo { font-size: 22px; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+        
+        #auth-area { display: flex; align-items: center; }
+        .kakao-login-btn { cursor: pointer; height: 32px; transition: opacity 0.2s; }
+        .user-profile { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+        .user-profile img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); }
 
-        .title { font-weight: bold; color: var(--primary); text-decoration: none; font-size: 16px; display: block; margin-bottom: 5px; }
-        .addr { font-size: 13px; color: #666; line-height: 1.4; display: block; }
-        .food { font-size: 11px; color: #999; margin-top: 5px; display: inline-block; padding: 2px 6px; background: #eee; border-radius: 4px; }
+        .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        #search-input { 
+            flex: 1; padding: 12px 16px; 
+            border: 2px solid var(--border); border-radius: 12px; 
+            font-size: 15px; outline: none; transition: 0.2s;
+        }
+        #search-input:focus { border-color: var(--primary); }
 
+        .btn-random { 
+            padding: 0 16px; background: var(--accent); color: #fff; 
+            border: none; border-radius: 12px; cursor: pointer; 
+            font-weight: bold; font-size: 20px;
+        }
+
+        .category-scroll {
+            display: flex; gap: 8px; overflow-x: auto; 
+            padding-bottom: 4px; scrollbar-width: none;
+        }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            white-space: nowrap; padding: 8px 16px; border-radius: 20px;
+            border: 1px solid var(--border); background: #fff;
+            color: var(--text-sub); font-size: 13px; cursor: pointer; transition: 0.2s;
+        }
+        .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+
+        /* 메인 콘텐츠 영역 */
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+
+        /* 사이드바 리스트 */
+        .sidebar { 
+            width: 380px; background: var(--bg);
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+        .list-info { padding: 12px 16px; font-size: 13px; color: var(--text-sub); border-bottom: 1px solid var(--border); }
+        #res-list { flex: 1; overflow-y: auto; padding: 12px; }
+
+        /* 맛집 카드 디자인 */
+        .res-card {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 16px; margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            cursor: pointer; transition: 0.2s; border: 2px solid transparent;
+        }
+        .res-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .res-card.active { border-color: var(--primary); background: #f0f7ff; }
+
+        .res-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: block; text-decoration: none; }
+        .res-addr { font-size: 13px; color: var(--text-sub); line-height: 1.4; margin-bottom: 8px; }
+        
+        /* 별점 UI */
+        .rating-container { display: flex; align-items: center; gap: 4px; }
+        .star { color: #ddd; font-size: 18px; cursor: pointer; }
+        .star.filled { color: #ffbc00; }
+        .rating-val { font-size: 14px; font-weight: 700; color: #444; margin-left: 4px; }
+
+        /* 지도 영역 */
         .map-area { flex: 1; position: relative; }
         #map { width: 100%; height: 100%; }
 
+        /* 반응형 설정 */
         @media (max-width: 768px) {
-            .main { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 40%; }
-            .map-area { height: 60%; }
+            .main-content { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 45%; border-right: none; border-top: 1px solid var(--border); }
+            .map-area { height: 55%; }
+        }
+
+        .custom-overlay {
+            background: var(--primary); color: white; padding: 6px 12px;
+            border-radius: 20px; font-size: 12px; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="header">
-        <div id="category-filter">
-            <button class="active" onclick="applyFilter('all', this)">전체</button>
-            <button onclick="applyFilter('국수', this)">국수</button>
-            <button onclick="applyFilter('중식', this)">중식</button>
-            <button onclick="applyFilter('분식', this)">분식</button>
-            <button onclick="applyFilter('고기', this)">고기</button>
-            <button onclick="applyFilter('치킨', this)">치킨</button>
-            <button onclick="applyFilter('술집', this)">술집</button>
-            <button onclick="applyFilter('카페', this)">카페</button>
+    <header class="header">
+        <div class="top-bar">
+            <div class="logo">skueat</div>
+            <div id="auth-area">
+                <img src="https://k.kakaocdn.net/14/dn/btroDszwNrM/K66Yq3z6TaOf4yabPLW48k/o.jpg" 
+                     class="kakao-login-btn" onclick="loginWithKakao()" alt="카카오 로그인">
+            </div>
         </div>
-        <div id="search-box">
-            <input type="text" id="search-input" placeholder="성결대 주변 맛집/카페 검색..." onkeyup="if(event.key==='Enter') applySearch()">
-            <button class="btn-pick" onclick="pickRandom()">🎲 무작위 추천</button>
+        <div class="search-row">
+            <input type="text" id="search-input" placeholder="맛집 이름이나 메뉴를 검색하세요" onkeyup="if(event.key==='Enter') applySearch()">
+            <button class="btn-random" onclick="pickRandom()">🎲</button>
         </div>
-    </div>
+        <nav class="category-scroll" id="category-filter">
+            <button class="cat-btn active" onclick="applyFilter('all', this)">전체</button>
+            <button class="cat-btn" onclick="applyFilter('국수', this)">🍜 국수</button>
+            <button class="cat-btn" onclick="applyFilter('중식', this)">🇨🇳 중식</button>
+            <button class="cat-btn" onclick="applyFilter('분식', this)">🍢 분식</button>
+            <button class="cat-btn" onclick="applyFilter('고기', this)">🥩 고기</button>
+            <button class="cat-btn" onclick="applyFilter('치킨', this)">🍗 치킨</button>
+            <button class="cat-btn" onclick="applyFilter('술집', this)">🍺 술집</button>
+            <button class="cat-btn" onclick="applyFilter('카페', this)">☕ 카페</button>
+        </nav>
+    </header>
 
-    <div class="recommend-display">
-        📍 <strong>오늘의 추천:</strong> 
-        <a id="recommended-link" href="#" target="_blank">리스트에서 선택하거나 주사위를 눌러보세요!</a>
-    </div>
-
-    <div class="main">
-        <div class="sidebar">
-            <table id="r-table">
-                <thead>
-                    <tr><th>맛집 리스트</th></tr>
-                </thead>
-                <tbody id="res-list">
-                    </tbody>
-            </table>
-        </div>
-        <div class="map-area">
+    <main class="main-content">
+        <aside class="sidebar">
+            <div class="list-info" id="list-count">맛집 리스트</div>
+            <div id="res-list"></div>
+        </aside>
+        <section class="map-area">
             <div id="map"></div>
-        </div>
-    </div>
+        </section>
+    </main>
 </div>
 
 <script>
-    /** 1. 지도 초기화 및 안양 8동 폴리곤 **/
+    // 카카오 SDK 초기화
+    Kakao.init('YOUR_KAKAO_JS_KEY'); 
     let map, currentMarker = null, currentOverlay = null;
+    let currentUser = null;
+
+    // 기존 안양 8동 경계 좌표 데이터
     const boundaryCoords = [
-        [126.936009, 37.383260], [126.936242, 37.382663], 
-        [126.936444, 37.382211], [126.936508, 37.382068], 
-        [126.936646, 37.381803], [126.936743, 37.381642], 
-        [126.936765, 37.381605], [126.936910, 37.381366], 
-        [126.937138, 37.381042], [126.937483, 37.380612], 
-        [126.937944, 37.380137], [126.938376, 37.379733], 
-        [126.938679, 37.379465], [126.938863, 37.379302], 
-        [126.939684, 37.378558], [126.940026, 37.378230], 
-        [126.940195, 37.378053], [126.940214, 37.378032], 
-        [126.940296, 37.377945], [126.940511, 37.377704], 
-        [126.940739, 37.377422], [126.940785, 37.377360], 
-        [126.940877, 37.377235], [126.940956, 37.377128], 
-        [126.941185, 37.376762], [126.940555, 37.376242], 
-        [126.940511, 37.376205], [126.940318, 37.376048], 
-        [126.940076, 37.375851], [126.939165, 37.376011], 
-        [126.937373, 37.376555], [126.934893, 37.376996], 
-        [126.932765, 37.377470], [126.930979, 37.377528], 
-        [126.926947, 37.377638], [126.924137, 37.377312], 
-        [126.923923, 37.377256], [126.921417, 37.376518], 
-        [126.919899, 37.376564], [126.919178, 37.376933], 
-        [126.919210, 37.377178], [126.919285, 37.377544], 
-        [126.919353, 37.377714], [126.919431, 37.377818], 
-        [126.920582, 37.379335], [126.921934, 37.380899], 
-        [126.924169, 37.383026], [126.925436, 37.384031], 
-        [126.925688, 37.384199], [126.925741, 37.384224], 
-        [126.925790, 37.384248], [126.932237, 37.385795], 
-        [126.933770, 37.383967], [126.933825, 37.383896], 
-        [126.936009, 37.383261]
+        [126.936009, 37.383260], [126.936242, 37.382663], [126.936444, 37.382211], [126.936508, 37.382068], 
+        [126.936646, 37.381803], [126.936743, 37.381642], [126.936765, 37.381605], [126.936910, 37.381366], 
+        [126.937138, 37.381042], [126.937483, 37.380612], [126.937944, 37.380137], [126.938376, 37.379733], 
+        [126.938679, 37.379465], [126.938863, 37.379302], [126.939684, 37.378558], [126.940026, 37.378230], 
+        [126.940195, 37.378053], [126.940214, 37.378032], [126.940296, 37.377945], [126.940511, 37.377704], 
+        [126.940739, 37.377422], [126.940785, 37.377360], [126.940877, 37.377235], [126.940956, 37.377128], 
+        [126.941185, 37.376762], [126.940555, 37.376242], [126.940511, 37.376205], [126.940318, 37.376048], 
+        [126.940076, 37.375851], [126.939165, 37.376011], [126.937373, 37.376555], [126.934893, 37.376996], 
+        [126.932765, 37.377470], [126.930979, 37.377528], [126.926947, 37.377638], [126.924137, 37.377312], 
+        [126.923923, 37.377256], [126.921417, 37.376518], [126.919899, 37.376564], [126.919178, 37.376933], 
+        [126.919210, 37.377178], [126.919285, 37.377544], [126.919353, 37.377714], [126.919431, 37.377818], 
+        [126.920582, 37.379335], [126.921934, 37.380899], [126.924169, 37.383026], [126.925436, 37.384031], 
+        [126.925688, 37.384199], [126.925741, 37.384224], [126.925790, 37.384248], [126.932237, 37.385795], 
+        [126.933770, 37.383967], [126.933825, 37.383896], [126.936009, 37.383261]
     ];
 
     function initMap() {
-        const mapContainer = document.getElementById('map');
-        const mapOption = { center: new kakao.maps.LatLng(37.383, 126.932), level: 3 };
-        map = new kakao.maps.Map(mapContainer, mapOption);
+        const container = document.getElementById('map');
+        const options = { center: new kakao.maps.LatLng(37.383, 126.932), level: 3 };
+        map = new kakao.maps.Map(container, options);
 
+        // 안양 8동 경계 표시 (폴리곤)
         const polygonPath = boundaryCoords.map(c => new kakao.maps.LatLng(c[1], c[0]));
-        new kakao.maps.Polygon({
-            path: polygonPath, strokeWeight: 3, strokeColor: '#FF0000', strokeOpacity: 0.8,
-            fillColor: '#FF0000', fillOpacity: 0.05
-        }).setMap(map);
-    }
-    function filterByCategory(category) {
-    // API 호출 시 카테고리 파라미터 추가
-    fetch(`/api/restaurants?category=${category}`)
-        .then(res => res.json())
-        .then(data => {
-            renderList(data);  // 목록 업데이트
-            displayMarkers(data); // 지도 마커 업데이트
+        const polygon = new kakao.maps.Polygon({
+            path: polygonPath,
+            strokeWeight: 3,
+            strokeColor: '#FF0000', // 경계선 강조를 위해 빨간색 유지
+            strokeOpacity: 0.6,
+            fillColor: '#FF0000',
+            fillOpacity: 0.05
         });
-}
+        polygon.setMap(map);
+    }
 
-    /** 2. 백엔드 API 연동 로직 **/
+    // 카카오 로그인
+    function loginWithKakao() {
+        Kakao.Auth.login({
+            success: function(authObj) {
+                Kakao.API.request({
+                    url: '/v2/user/me',
+                    success: function(res) {
+                        currentUser = res.kakao_account.profile;
+                        updateUIWithUser(currentUser);
+                    }
+                });
+            }
+        });
+    }
+
+    function updateUIWithUser(user) {
+        document.getElementById('auth-area').innerHTML = `
+            <div class="user-profile">
+                <img src="${user.thumbnail_image_url}">
+                <span>${user.nickname}</span>
+            </div>
+        `;
+    }
+
+    // 데이터 패칭
     async function fetchData(category = 'all', search = '') {
-        const url = `http://localhost:8080/api/restaurants?category=${category}&search=${search}`;
+        const url = `/api/restaurants?category=${category}&search=${search}`;
         try {
             const response = await fetch(url);
             const data = await response.json();
             renderList(data);
-        } catch (error) {
-            console.error("데이터 로드 실패:", error);
+        } catch (e) {
+            console.error("데이터 로드 실패", e);
         }
     }
 
     function renderList(data) {
-        const listBody = document.getElementById('res-list');
-        listBody.innerHTML = '';
-        
+        const container = document.getElementById('res-list');
+        const count = document.getElementById('list-count');
+        container.innerHTML = '';
+        count.textContent = `총 ${data.length}개의 맛집`;
+
         data.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <a class="title" href="${item.url}" target="_blank">${item.title}</a>
-                    <span class="addr">${item.addr}</span>
-                    <span class="food">${item.food}</span>
-                </td>
+            const card = document.createElement('div');
+            card.className = 'res-card';
+            const rating = item.rating || 0; 
+            
+            card.innerHTML = `
+                <a class="res-title" href="${item.url}" target="_blank" onclick="event.stopPropagation()">${item.title}</a>
+                <div class="rating-container">
+                    ${[1,2,3,4,5].map(i => `<span class="star ${i <= Math.round(rating) ? 'filled' : ''}" onclick="rate('${item.title}', ${i}, event)">★</span>`).join('')}
+                    <span class="rating-val">${rating.toFixed(1)}</span>
+                </div>
+                <div class="res-addr">${item.addr}</div>
             `;
-            tr.onclick = () => focusOn(item);
-            listBody.appendChild(tr);
+            card.onclick = () => focusOn(item, card);
+            container.appendChild(card);
         });
     }
 
-    /** 3. 단일 마커 시스템 **/
-    function focusOn(item) {
+    function rate(title, score, event) {
+        event.stopPropagation();
+        if (!currentUser) {
+            alert("별점을 남기려면 로그인이 필요합니다! 🔒");
+            return;
+        }
+        alert(`${title}에 ${score}점을 주셨습니다.`);
+    }
+
+    function focusOn(item, cardElement) {
+        document.querySelectorAll('.res-card').forEach(c => c.classList.remove('active'));
+        if(cardElement) cardElement.classList.add('active');
+
         if (currentMarker) currentMarker.setMap(null);
         if (currentOverlay) currentOverlay.setMap(null);
 
         const pos = new kakao.maps.LatLng(item.y, item.x);
         currentMarker = new kakao.maps.Marker({ position: pos, map: map });
-        
         currentOverlay = new kakao.maps.CustomOverlay({
-            position: pos,
-            content: `<div class="map-overlay" style="padding:5px 10px; background:white; border:1px solid #888; border-radius:5px; font-size:12px; bottom:40px; position:relative; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); font-weight:bold;">${item.title}</div>`,
-            yAnchor: 1
+            position: pos, content: `<div class="custom-overlay">${item.title}</div>`, yAnchor: 2.2
         });
         currentOverlay.setMap(map);
         map.panTo(pos);
     }
 
-    /** 4. 필터 및 무작위 추천 **/
     function applyFilter(category, btn) {
-        document.querySelectorAll('#category-filter button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         fetchData(category, document.getElementById('search-input').value);
     }
 
     function applySearch() {
-        const keyword = document.getElementById('search-input').value;
-        fetchData('all', keyword);
+        const activeCat = document.querySelector('.cat-btn.active').textContent.split(' ').pop();
+        fetchData(activeCat === '전체' ? 'all' : activeCat, document.getElementById('search-input').value);
     }
 
     async function pickRandom() {
-        try {
-            const response = await fetch('http://localhost:8080/api/restaurants/random');
-            const pick = await response.json();
-            
-            const link = document.getElementById('recommended-link');
-            link.textContent = `${pick.title} (${pick.food})`;
-            link.href = pick.url;
-            focusOn(pick);
-        } catch (error) {
-            console.error("추천 데이터를 가져오지 못했습니다.");
-        }
+        const res = await fetch('/api/restaurants/random');
+        const pick = await res.json();
+        const cards = document.querySelectorAll('.res-card');
+        cards.forEach(card => {
+            if(card.querySelector('.res-title').textContent === pick.title) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                focusOn(pick, card);
+            }
+        });
     }
 
-    // 초기화 실행
-    initMap();
-    fetchData();
+    window.onload = () => {
+        initMap();
+        fetchData();
+    };
 </script>
 
 </body>
