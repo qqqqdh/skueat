@@ -16,46 +16,55 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// 카카오 토큰 응답 구조체
+// KakaoTokenResponse: 카카오 토큰 발급 응답 구조체
 type KakaoTokenResponse struct {
-	AccessToken string `json:"access_token"`
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	Scope        string `json:"scope"`
 }
 
-// 카카오 사용자 정보 구조체
+// KakaoUserResponse: 카카오 사용자 정보 응답 구조체
 type KakaoUserResponse struct {
 	ID         int64 `json:"id"`
 	Properties struct {
 		Nickname string `json:"nickname"`
 	} `json:"properties"`
+	KakaoAccount struct {
+		Profile struct {
+			Nickname string `json:"nickname"`
+		} `json:"profile"`
+	} `json:"kakao_account"`
 }
+
+// ... existing code ...
 
 func main() {
 	// 1. 환경변수 초기화
 	godotenv.Load()
 
-	// 2. 로그 시스템 설정 (모든 엔진 초기화보다 먼저 수행되어야 함)
+	// 2. 로그 시스템 설정
 	if _, err := os.Stat("logs"); os.IsNotExist(err) {
 		os.Mkdir("logs", 0755)
 	}
 
-	// os.OpenFile을 사용하여 기존 로그 뒤에 내용을 추가(Append)함
 	f, err := os.OpenFile("logs/app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Printf("로그 파일을 열 수 없습니다: %v\n", err)
+		fmt.Printf("로그 파일을 열 수 없습니다: %v", err)
 		return
 	}
 
-	// 터미널과 파일에 동시에 출력하도록 설정
 	multiWriter := io.MultiWriter(f, os.Stdout)
 	gin.DefaultWriter = multiWriter
 	log.SetOutput(multiWriter)
-	log.SetFlags(0) // 표준 log 사용 시 타임스탬프를 제거하여 커스텀 형식 유지
+	log.SetFlags(0)
 
-	// 3. Gin 엔진 생성 (gin.Default 대신 gin.New를 사용하여 미들웨어를 직접 제어)
+	// 3. Gin 엔진 생성
 	r := gin.New()
-	r.Use(gin.Recovery()) // 패닉 발생 시 서버 복구
+	r.Use(gin.Recovery())
 
-	// 4. 커스텀 로그 포맷터 설정 (LEVEL [응답코드] 형식)
+	// 4. 커스텀 로그 포맷터 설정
 	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		level := "INFO "
 		if param.StatusCode >= 400 && param.StatusCode < 500 {
@@ -64,7 +73,6 @@ func main() {
 			level = "ERROR"
 		}
 
-		// 결과 형식: LEVEL [상태코드] 메서드 경로 (소요시간)
 		return fmt.Sprintf("%s [%d] %s %s (%s)\n",
 			level,
 			param.StatusCode,
@@ -74,11 +82,11 @@ func main() {
 		)
 	}))
 
-	// 5. DB 초기화 및 서버 시작 로그 기록
+	// 5. DB 초기화
 	InitDB()
 	log.Println("INFO  app started")
 
-	// 6. 세션 설정 (로그인 상태 유지)
+	// 6. 세션 설정
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))
 
@@ -94,6 +102,7 @@ func main() {
 			"ApiKey":     os.Getenv("KAKAO_API_KEY"),
 			"IsLoggedIn": userName != nil,
 			"UserName":   userName,
+			"AppDomain":  os.Getenv("APP_DOMAIN"),
 		})
 	})
 
@@ -129,8 +138,9 @@ func main() {
 	// 카카오 로그인 시작
 	r.GET("/login/kakao", func(c *gin.Context) {
 		clientID := os.Getenv("REST_API_KEY")
-		redirectURI := "http://localhost:8080/auth/kakao/callback"
-		kakaoURL := fmt.Sprintf("https://kauth.kakao.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code", clientID, redirectURI)
+		appDomain := os.Getenv("APP_DOMAIN")
+		redirectURI := appDomain + "/auth/kakao/callback"
+		kakaoURL := fmt.Sprintf("https://kauth.kakao.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code", clientID, url.QueryEscape(redirectURI))
 		c.Redirect(http.StatusFound, kakaoURL)
 	})
 
@@ -142,7 +152,8 @@ func main() {
 			return
 		}
 
-		tokenRes, err := getKakaoToken(code)
+		appDomain := os.Getenv("APP_DOMAIN")
+		tokenRes, err := getKakaoToken(code, appDomain)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "토큰 발급 실패")
 			return
@@ -204,16 +215,28 @@ func main() {
 		c.Redirect(http.StatusFound, "/")
 	})
 
-	r.Run(":8080")
+	// 동적 포트 바인딩
+	appHost := os.Getenv("APP_HOST")
+	appPort := os.Getenv("APP_PORT")
+	if appHost == "" {
+		appHost = "0.0.0.0"
+	}
+	if appPort == "" {
+		appPort = "8080"
+	}
+
+	addr := appHost + ":" + appPort
+	log.Printf("INFO  server listening on %s\n", addr)
+	r.Run(addr)
 }
 
 // --- [도움 함수] ---
 
-func getKakaoToken(code string) (*KakaoTokenResponse, error) {
+func getKakaoToken(code string, appDomain string) (*KakaoTokenResponse, error) {
 	params := url.Values{}
 	params.Add("grant_type", "authorization_code")
 	params.Add("client_id", os.Getenv("REST_API_KEY"))
-	params.Add("redirect_uri", "http://localhost:8080/auth/kakao/callback")
+	params.Add("redirect_uri", appDomain+"/auth/kakao/callback")
 	params.Add("code", code)
 
 	resp, err := http.PostForm("https://kauth.kakao.com/oauth/token", params)
