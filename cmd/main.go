@@ -90,6 +90,10 @@ func main() {
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))
 
+	// 💡 여기서 정적 파일(CSS, JS) 경로를 설정해 줍니다.
+	// /static 경로로 들어오는 요청은 현재 폴더의 ./static 폴더 안에서 찾아서 응답합니다.
+	r.Static("/static", "./static")
+
 	r.LoadHTMLGlob("index.html")
 
 	// --- [라우터 설정] ---
